@@ -1,9 +1,12 @@
+"use server";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { PatientFormState } from "./state";
 
 const pacienteSchema = z.object({
   first_name: z.string().min(2, "Ingresa el nombre del paciente."),
@@ -44,16 +47,6 @@ const pacienteSchema = z.object({
     .optional()
     .transform((value) => (value ? value : null)),
 });
-
-export type PatientFormState = {
-  error: string | null;
-  success: boolean;
-};
-
-export const patientInitialState: PatientFormState = {
-  error: null,
-  success: false,
-};
 
 export async function createPatientAction(
   _prevState: PatientFormState,
