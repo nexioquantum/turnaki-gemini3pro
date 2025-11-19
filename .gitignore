@@ -3,6 +3,7 @@
 
 # Dependencies / builds
 node_modules/
+.cursor/
 .pnpm-store/
 .npm-cache/
 
