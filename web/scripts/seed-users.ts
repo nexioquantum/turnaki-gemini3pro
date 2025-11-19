@@ -49,22 +49,50 @@ if (!url || !serviceRoleKey) {
 
 const supabase = createClient(url, serviceRoleKey);
 
-async function seedUser(user: SeedUser) {
-  const { data: existingUser, error: fetchError } = await supabase
-    .auth.admin.listUsers({
-      page: 1,
-      perPage: 1,
-      email: user.email,
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
+async function findAuthUserByEmail(email: string) {
+  let page = 1;
+  const perPage = 100;
+
+  while (true) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage,
     });
 
-  if (fetchError) {
-    console.error(`Error consultando usuario ${user.email}:`, fetchError.message);
+    if (error) {
+      throw error;
+    }
+
+    const user = data.users.find(
+      (u) => normalizeEmail(u.email ?? "") === normalizeEmail(email)
+    );
+
+    if (user) {
+      return user;
+    }
+
+    if (data.users.length < perPage) {
+      return null;
+    }
+
+    page += 1;
+  }
+}
+
+async function seedUser(user: SeedUser) {
+  let existingUser = null;
+  try {
+    existingUser = await findAuthUserByEmail(user.email);
+  } catch (err) {
+    console.error(`Error consultando usuario ${user.email}:`, (err as Error).message);
     return;
   }
 
-  if (existingUser.users.length > 0) {
+  if (existingUser) {
     console.log(`Usuario ${user.email} ya existe. Actualizando profile…`);
-    await upsertProfile(existingUser.users[0].id, user);
+    await upsertProfile(existingUser.id, user);
     return;
   }
 
