@@ -47,14 +47,24 @@ test.describe("Citas para odontólogo", () => {
     expect(firstSillonValue).toBeTruthy();
     await sillonSelect.selectOption(firstSillonValue!);
 
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + 2);
+    const targetDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+    targetDate.setHours(0, 0, 0, 0);
     const dateString = targetDate.toISOString().split("T")[0];
+
+    const formatTime = (hour: number, minute: number) =>
+      `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+
+    const minuteOptions = [0, 15, 30, 45];
+    const seed = Date.now();
+    const baseHour = 8 + (Math.floor(seed / 60000) % 6); // 8..13
+    const baseMinute = minuteOptions[seed % minuteOptions.length];
+    const slotA = formatTime(baseHour, baseMinute);
+    const slotB = formatTime(baseHour + 2, baseMinute);
 
     const fillSlot = async (time: string) => {
       await page.locator('input[name="date"]').fill(dateString);
       await page.locator('input[name="start_time"]').fill(time);
-      const notes = `Cita e2e ${Date.now()} - ${time}`;
+      const notes = `Cita e2e ${dateString} ${time}`;
       await page.locator('textarea[name="motivo_detalle"]').fill(notes);
     };
 
@@ -63,9 +73,6 @@ test.describe("Citas para odontólogo", () => {
         page.getByText("Cita confirmada para", { exact: false })
       ).toBeVisible();
     };
-
-    const slotA = "10:30";
-    const slotB = "12:00";
 
     // Primer registro exitoso
     await fillSlot(slotA);
