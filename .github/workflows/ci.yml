@@ -12,6 +12,14 @@ jobs:
   lint-and-build:
     name: Lint and Build
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_ODONTOLOGO_EMAIL: ${{ secrets.E2E_ODONTOLOGO_EMAIL }}
+      E2E_ODONTOLOGO_PASSWORD: ${{ secrets.E2E_ODONTOLOGO_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -35,4 +43,12 @@ jobs:
       - name: Build
         working-directory: web
         run: npm run build
+
+      - name: Install Playwright dependencies
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Run e2e tests
+        working-directory: web
+        run: npm run test:e2e
 
