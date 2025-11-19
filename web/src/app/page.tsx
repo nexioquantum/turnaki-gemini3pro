@@ -162,6 +162,16 @@ export default async function Home() {
                   </Link>
                 </p>
               ) : null}
+              {role === "ODONTOLOGO" ? (
+                <p className="mt-3">
+                  <Link
+                    href="/odontologo/citas/nueva"
+                    className="inline-flex items-center rounded-full border border-zinc-200 px-3 py-1 font-medium text-zinc-700 transition hover:bg-zinc-100"
+                  >
+                    Crear cita confirmada
+                  </Link>
+                </p>
+              ) : null}
             </div>
           ) : null}
         </header>
