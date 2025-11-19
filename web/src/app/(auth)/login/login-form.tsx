@@ -1,7 +1,8 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { loginInitialState, signInAction } from "./actions";
+import { signInAction } from "./actions";
+import { loginInitialState } from "./state";
 
 function SubmitButton() {
   const { pending } = useFormStatus();

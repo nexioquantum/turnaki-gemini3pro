@@ -2,12 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-export type LoginFormState = {
-  error: string | null;
-};
-
-const INITIAL_ERROR_STATE: LoginFormState = { error: null };
+import type { LoginFormState } from "./state";
 
 export const signInAction = async (
   _prevState: LoginFormState | undefined,
@@ -40,6 +35,4 @@ export const signInAction = async (
 
   redirect("/");
 };
-
-export const loginInitialState = INITIAL_ERROR_STATE;
 
