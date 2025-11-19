@@ -152,6 +152,16 @@ export default async function Home() {
               <p>
                 {profileName} · <span className="uppercase">{role}</span>
               </p>
+              {role === "ADMIN" ? (
+                <p className="mt-3">
+                  <Link
+                    href="/admin/perfiles"
+                    className="inline-flex items-center rounded-full border border-zinc-200 px-3 py-1 font-medium text-zinc-700 transition hover:bg-zinc-100"
+                  >
+                    Administrar perfiles
+                  </Link>
+                </p>
+              ) : null}
             </div>
           ) : null}
         </header>
