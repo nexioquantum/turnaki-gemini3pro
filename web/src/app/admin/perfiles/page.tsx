@@ -8,6 +8,8 @@ type ProfileRow = Pick<
   "id" | "full_name" | "role" | "active" | "created_at"
 >;
 
+type RoleCheck = Pick<Database["public"]["Tables"]["profiles"]["Row"], "role">;
+
 const roleLabels: Record<ProfileRow["role"], string> = {
   ADMIN: "Administrador",
   ODONTOLOGO: "Odontólogo",
@@ -40,11 +42,13 @@ async function loadProfiles(): Promise<ProfileRow[]> {
     redirect("/login");
   }
 
-  const { data: requesterProfile } = await supabase
+  const requesterProfileResponse = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .maybeSingle();
+
+  const requesterProfile = requesterProfileResponse.data as RoleCheck | null;
 
   if (!requesterProfile || requesterProfile.role !== "ADMIN") {
     redirect("/");
