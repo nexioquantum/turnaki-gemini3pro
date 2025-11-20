@@ -47,8 +47,14 @@ test.describe("Citas para odontólogo", () => {
     expect(firstSillonValue).toBeTruthy();
     await sillonSelect.selectOption(firstSillonValue!);
 
-    const targetDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+    const ciSeed =
+      Number(process.env.GITHUB_RUN_NUMBER) ||
+      Number(process.env.GITHUB_RUN_ID) ||
+      Date.now();
+    const offsetDays = 2 + (ciSeed % 21); // asegura fechas futuras variadas
+    const targetDate = new Date();
     targetDate.setHours(0, 0, 0, 0);
+    targetDate.setDate(targetDate.getDate() + offsetDays);
     const dateString = targetDate.toISOString().split("T")[0];
 
     const formatTime = (hour: number, minute: number) =>
@@ -59,7 +65,7 @@ test.describe("Citas para odontólogo", () => {
     const baseHour = 8 + (Math.floor(seed / 60000) % 6); // rango 8..13
     const baseMinute = minuteOptions[seed % minuteOptions.length];
     const baseMinuteIndex = minuteOptions.indexOf(baseMinute);
-    const candidateSlots = Array.from({ length: 6 }).map((_, idx) => {
+    const candidateSlots = Array.from({ length: 4 }).map((_, idx) => {
       const hour = (baseHour + idx) % 24;
       const minute = minuteOptions[(baseMinuteIndex + idx) % minuteOptions.length];
       return formatTime(hour, minute);
@@ -76,7 +82,7 @@ test.describe("Citas para odontólogo", () => {
       try {
         await page
           .getByText("Cita confirmada para", { exact: false })
-          .waitFor({ timeout: 15000 });
+          .waitFor({ timeout: 8000 });
         return true;
       } catch {
         return false;
