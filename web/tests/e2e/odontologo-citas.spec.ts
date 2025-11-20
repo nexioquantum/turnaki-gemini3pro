@@ -72,6 +72,10 @@ test.describe("Citas para odontólogo", () => {
     });
 
     const fillSlot = async (time: string) => {
+      await patientSelect.selectOption({ index: 1 });
+      if (firstSillonValue) {
+        await sillonSelect.selectOption(firstSillonValue);
+      }
       await page.locator('input[name="date"]').fill(dateString);
       await page.locator('input[name="start_time"]').fill(time);
       const notes = `Cita e2e ${dateString} ${time}`;
