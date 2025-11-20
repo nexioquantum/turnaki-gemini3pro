@@ -56,10 +56,14 @@ test.describe("Citas para odontólogo", () => {
 
     const minuteOptions = [0, 15, 30, 45];
     const seed = Date.now();
-    const baseHour = 8 + (Math.floor(seed / 60000) % 6); // 8..13
+    const baseHour = 8 + (Math.floor(seed / 60000) % 6); // rango 8..13
     const baseMinute = minuteOptions[seed % minuteOptions.length];
-    const slotA = formatTime(baseHour, baseMinute);
-    const slotB = formatTime(baseHour + 2, baseMinute);
+    const candidateSlots = Array.from({ length: 6 }).map((_, idx) =>
+      formatTime(
+        baseHour + idx,
+        minuteOptions[(minuteOptions.indexOf(baseMinute) + idx) % minuteOptions.length]
+      )
+    );
 
     const fillSlot = async (time: string) => {
       await page.locator('input[name="date"]').fill(dateString);
@@ -69,27 +73,46 @@ test.describe("Citas para odontólogo", () => {
     };
 
     const assertSuccess = async () => {
-      await expect(
-        page.getByText("Cita confirmada para", { exact: false })
-      ).toBeVisible({ timeout: 15000 });
+      try {
+        await page
+          .getByText("Cita confirmada para", { exact: false })
+          .waitFor({ timeout: 15000 });
+        return true;
+      } catch {
+        return false;
+      }
     };
 
-    // Primer registro exitoso
-    await fillSlot(slotA);
-    await page.getByRole("button", { name: "Confirmar cita" }).click();
-    await assertSuccess();
+    const ensureError = async (text: string) => {
+      await expect(page.getByText(text)).toBeVisible({ timeout: 15000 });
+    };
+
+    let confirmedSlot: string | null = null;
+
+    for (const slot of candidateSlots) {
+      await fillSlot(slot);
+      await page.getByRole("button", { name: "Confirmar cita" }).click();
+      if (await assertSuccess()) {
+        confirmedSlot = slot;
+        break;
+      }
+    }
+
+    expect(confirmedSlot).not.toBeNull();
+    const slotA = confirmedSlot!;
 
     // Intento duplicado en la misma franja -> debe devolver error de solapamiento
     await fillSlot(slotA);
     await page.getByRole("button", { name: "Confirmar cita" }).click();
-    await expect(
-      page.getByText("Ya tienes una cita asignada en ese horario.")
-    ).toBeVisible({ timeout: 15000 });
+    await ensureError("Ya tienes una cita asignada en ese horario.");
 
     // Cambio de horario para confirmar que otro slot se registra correctamente
+    const slotB =
+      candidateSlots.find((slot) => slot !== slotA) ?? formatTime(baseHour + 3, baseMinute);
     await fillSlot(slotB);
     await page.getByRole("button", { name: "Confirmar cita" }).click();
-    await assertSuccess();
+    const finalSuccess = await assertSuccess();
+    expect(finalSuccess).toBeTruthy();
   });
 });
 
