@@ -58,12 +58,12 @@ test.describe("Citas para odontólogo", () => {
     const seed = Date.now();
     const baseHour = 8 + (Math.floor(seed / 60000) % 6); // rango 8..13
     const baseMinute = minuteOptions[seed % minuteOptions.length];
-    const candidateSlots = Array.from({ length: 6 }).map((_, idx) =>
-      formatTime(
-        baseHour + idx,
-        minuteOptions[(minuteOptions.indexOf(baseMinute) + idx) % minuteOptions.length]
-      )
-    );
+    const baseMinuteIndex = minuteOptions.indexOf(baseMinute);
+    const candidateSlots = Array.from({ length: 6 }).map((_, idx) => {
+      const hour = (baseHour + idx) % 24;
+      const minute = minuteOptions[(baseMinuteIndex + idx) % minuteOptions.length];
+      return formatTime(hour, minute);
+    });
 
     const fillSlot = async (time: string) => {
       await page.locator('input[name="date"]').fill(dateString);
@@ -83,8 +83,19 @@ test.describe("Citas para odontólogo", () => {
       }
     };
 
-    const ensureError = async (text: string) => {
-      await expect(page.getByText(text)).toBeVisible({ timeout: 15000 });
+    const waitForEither = async (
+      successLocator: ReturnType<typeof page.getByText>,
+      errorLocator: ReturnType<typeof page.getByText>
+    ) => {
+      try {
+        const result = await Promise.race([
+          successLocator.waitFor({ timeout: 15000 }).then(() => "success"),
+          errorLocator.waitFor({ timeout: 15000 }).then(() => "error"),
+        ]);
+        return result as "success" | "error";
+      } catch {
+        return "timeout" as const;
+      }
     };
 
     let confirmedSlot: string | null = null;
@@ -104,7 +115,10 @@ test.describe("Citas para odontólogo", () => {
     // Intento duplicado en la misma franja -> debe devolver error de solapamiento
     await fillSlot(slotA);
     await page.getByRole("button", { name: "Confirmar cita" }).click();
-    await ensureError("Ya tienes una cita asignada en ese horario.");
+    const solapLocator = page.getByText("Ya tienes una cita asignada en ese horario.");
+    const successLocator = page.getByText("Cita confirmada para", { exact: false });
+    const result = await waitForEither(successLocator, solapLocator);
+    expect(result).toBe("error");
 
     // Cambio de horario para confirmar que otro slot se registra correctamente
     const slotB =
