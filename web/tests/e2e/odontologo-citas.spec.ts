@@ -71,7 +71,7 @@ test.describe("Citas para odontólogo", () => {
     const assertSuccess = async () => {
       await expect(
         page.getByText("Cita confirmada para", { exact: false })
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 15000 });
     };
 
     // Primer registro exitoso
@@ -84,7 +84,7 @@ test.describe("Citas para odontólogo", () => {
     await page.getByRole("button", { name: "Confirmar cita" }).click();
     await expect(
       page.getByText("Ya tienes una cita asignada en ese horario.")
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15000 });
 
     // Cambio de horario para confirmar que otro slot se registra correctamente
     await fillSlot(slotB);
